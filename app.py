@@ -54,7 +54,8 @@ def get_files_by_category(category):
 def delete_file(file_path, category):
     if os.path.exists(file_path):
         os.remove(file_path)
-        st.session_state['uploaded_files'].remove(file_path)  # Remove from session state
+        if file_path in st.session_state['uploaded_files']:
+            st.session_state['uploaded_files'].remove(file_path)  # Remove from session state if it was uploaded in this session
         st.success(f"File '{os.path.basename(file_path)}' has been deleted.")
         
         # Check if the category folder is empty, and delete it if so
@@ -64,7 +65,7 @@ def delete_file(file_path, category):
             st.success(f"Category '{category}' has been deleted as it had no more files.")
 
 # Page title
-st.title("Audio File Downloader, Uploader, and Deleter")
+st.title("Audio File Downloader, Uploader, Player, and Deleter")
 
 # Upload Section
 st.header("Upload an Audio File")
@@ -95,19 +96,22 @@ categories = ["Choose a category"] + get_categories()  # Add placeholder as the 
 selected_category = st.selectbox("Choose a category", categories)
 
 if selected_category == "Choose a category":
-    st.write("Please select a category to view files available for download or deletion.")
+    st.write("Please select a category to view files available for download, play, or deletion.")
 else:
-    # Display files in the selected category with download and delete options
+    # Display files in the selected category with download, play, and delete options
     files = get_files_by_category(selected_category)
     
     if files:
         st.subheader(f"Files in '{selected_category}' category:")
         
-        # Provide download links and delete buttons for each file in the category
+        # Provide download links, play buttons, and delete buttons for each file in the category
         for file_name, duration, size_mb, file_path in files:
             # Display file name, duration, and size in MB
             st.write(f"**{file_name}** - Duration: {duration}, Size: {size_mb:.2f} MB")
             
+            # Audio player
+            st.audio(file_path, format="audio/mp3")
+
             # Columns for download and delete buttons
             col1, col2 = st.columns(2)
             with col1:
@@ -121,9 +125,8 @@ else:
                         mime="audio/mpeg"
                     )
             with col2:
-                # Show the delete button only if the file was uploaded in this session
-                if file_path in st.session_state['uploaded_files']:
-                    if st.button("Delete", key=file_path):
-                        delete_file(file_path, selected_category)
+                # Delete button (available for all files)
+                if st.button("Delete", key=file_path):
+                    delete_file(file_path, selected_category)
     else:
         st.write("No files in this category.")
