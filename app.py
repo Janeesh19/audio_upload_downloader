@@ -29,7 +29,6 @@ def login():
         if check_authentication(username, password):
             st.session_state['authenticated'] = True
             st.success("Login successful!")
-            st.experimental_rerun()  # Reload the app after login
         else:
             st.error("Invalid username or password")
 
@@ -37,7 +36,6 @@ def login():
 def logout():
     st.session_state['authenticated'] = False
     st.success("You have been logged out.")
-    st.experimental_rerun()  # Reload the app after logout
 
 # Function to get list of categories (subfolders in AUDIO_FOLDER)
 def get_categories():
