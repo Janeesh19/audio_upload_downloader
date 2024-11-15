@@ -28,6 +28,8 @@ def login():
     if st.button("Login"):
         if check_authentication(username, password):
             st.session_state['authenticated'] = True
+            st.success("Login successful!")
+            st.experimental_rerun()  # Reload the app after login
         else:
             st.error("Invalid username or password")
 
@@ -35,6 +37,7 @@ def login():
 def logout():
     st.session_state['authenticated'] = False
     st.success("You have been logged out.")
+    st.experimental_rerun()  # Reload the app after logout
 
 # Function to get list of categories (subfolders in AUDIO_FOLDER)
 def get_categories():
@@ -50,19 +53,20 @@ def save_uploaded_file(uploaded_file, category):
     st.session_state['uploaded_files'].append(file_path)
     return file_path
 
-# Function to get audio metadata
+# Function to get audio metadata (duration in MM:SS and size in MB)
 def get_audio_metadata(file_path):
     tag = TinyTag.get(file_path)
-    duration_seconds = tag.duration
-    size_mb = os.path.getsize(file_path) / (1024 * 1024)
+    duration_seconds = tag.duration  # Duration in seconds
+    size_mb = os.path.getsize(file_path) / (1024 * 1024)  # Size in MB
 
+    # Convert duration to minutes and seconds
     minutes = int(duration_seconds // 60)
     seconds = int(duration_seconds % 60)
-    formatted_duration = f"{minutes}:{seconds:02d}"
+    formatted_duration = f"{minutes}:{seconds:02d}"  # Format as MM:SS
 
     return formatted_duration, size_mb
 
-# Function to get files in a specific category
+# Function to get files in a specific category and their metadata
 def get_files_by_category(category):
     category_folder = os.path.join(AUDIO_FOLDER, category)
     if os.path.exists(category_folder):
@@ -111,6 +115,7 @@ def main_app():
 
     st.header("Select Category to Manage Files")
     categories = ["Choose a category"] + get_categories()
+
     selected_category = st.selectbox("Choose a category", categories)
 
     if selected_category == "Choose a category":
