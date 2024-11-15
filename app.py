@@ -28,7 +28,6 @@ def login():
     if st.button("Login"):
         if check_authentication(username, password):
             st.session_state['authenticated'] = True
-            st.success("Login successful!")
         else:
             st.error("Invalid username or password")
 
