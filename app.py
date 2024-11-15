@@ -1,6 +1,5 @@
 import streamlit as st
 import os
-from tinytag import TinyTag  # Lightweight library to get audio metadata
 
 # Define the main folder where audio files are stored
 AUDIO_FOLDER = "audio_files"
@@ -25,37 +24,26 @@ def save_uploaded_file(uploaded_file, category):
     st.session_state['uploaded_files'].append(file_path)
     return file_path
 
-# Function to get audio metadata (duration and size) using TinyTag
-def get_audio_metadata(file_path):
-    tag = TinyTag.get(file_path)
-    duration_seconds = tag.duration  # Duration in seconds
-    size = os.path.getsize(file_path)  # Size in bytes
-
-    # Convert duration to minutes and seconds
-    minutes = int(duration_seconds // 60)
-    seconds = int(duration_seconds % 60)
-    formatted_duration = f"{minutes}:{seconds:02d}"  # Format as MM:SS
-
-    return formatted_duration, size
-
-# Function to get files in a specific category and their metadata
+# Function to get files in a specific category
 def get_files_by_category(category):
     category_folder = os.path.join(AUDIO_FOLDER, category)
     if os.path.exists(category_folder):
-        files = []
-        for file_name in os.listdir(category_folder):
-            file_path = os.path.join(category_folder, file_name)
-            duration, size = get_audio_metadata(file_path)
-            files.append((file_name, duration, size, file_path))
+        files = [(file_name, os.path.join(category_folder, file_name)) for file_name in os.listdir(category_folder)]
         return files
     return []
 
-# Function to delete a file
-def delete_file(file_path):
+# Function to delete a file and remove the category if empty
+def delete_file(file_path, category):
     if os.path.exists(file_path):
         os.remove(file_path)
         st.session_state['uploaded_files'].remove(file_path)  # Remove from session state
         st.success(f"File '{os.path.basename(file_path)}' has been deleted.")
+        
+        # Check if the category folder is empty, and delete it if so
+        category_folder = os.path.join(AUDIO_FOLDER, category)
+        if not os.listdir(category_folder):  # Folder is empty
+            os.rmdir(category_folder)
+            st.success(f"Category '{category}' has been deleted as it had no more files.")
 
 # Page title
 st.title("Audio File Downloader, Uploader, and Deleter")
@@ -91,16 +79,17 @@ selected_category = st.selectbox("Choose a category", categories)
 if selected_category == "Choose a category":
     st.write("Please select a category to view files available for download or deletion.")
 else:
-    # Display files in the selected category with metadata and delete options
+    # Display files in the selected category with download and delete options
     files = get_files_by_category(selected_category)
     
     if files:
         st.subheader(f"Files in '{selected_category}' category:")
         
         # Provide download links and delete buttons for each file in the category
-        for file_name, duration, size, file_path in files:
-            # Display file name, duration, and size
-            st.write(f"**{file_name}** - Duration: {duration} minutes, Size: {size / 1024:.2f} KB")
+        for file_name, file_path in files:
+            # Display file name and size in MB
+            file_size_mb = os.path.getsize(file_path) / (1024 * 1024)  # Size in MB
+            st.write(f"**{file_name}** - Size: {file_size_mb:.2f} MB")
             
             # Columns for download and delete buttons
             col1, col2 = st.columns(2)
@@ -118,6 +107,6 @@ else:
                 # Show the delete button only if the file was uploaded in this session
                 if file_path in st.session_state['uploaded_files']:
                     if st.button("Delete", key=file_path):
-                        delete_file(file_path)
+                        delete_file(file_path, selected_category)
     else:
         st.write("No files in this category.")
