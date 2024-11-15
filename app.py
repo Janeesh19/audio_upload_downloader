@@ -8,7 +8,7 @@ os.makedirs(AUDIO_FOLDER, exist_ok=True)  # Ensure the folder exists
 
 # Define username and password 
 USERNAME = "apprikart"
-PASSWORD = "apprikart@123" 
+PASSWORD = "jfksonerk831" 
 
 # Initialize session state for authentication and uploaded files
 if 'authenticated' not in st.session_state:
