@@ -67,13 +67,9 @@ def delete_file(file_path, category):
 # Page title
 st.title("Audio File Downloader, Uploader, Player, and Deleter")
 
-# Upload Section
-st.header("Upload an Audio File")
-uploaded_file = st.file_uploader("Choose an audio file", type=["mp3"])
-
 # Dropdown for category selection with an option to add a new category
 existing_categories = get_categories()
-category_option = st.selectbox("Select a category or type a new one", ["Create New Category"] + existing_categories)
+category_option = st.selectbox("Select a category or type a new one for your file", ["Create New Category"] + existing_categories)
 
 if category_option == "Create New Category":
     # If 'Create New Category' is selected, show a text input for the new category
@@ -88,6 +84,10 @@ if st.button("Upload File"):
         st.success(f"File '{uploaded_file.name}' uploaded successfully to category '{category}'.")
     else:
         st.error("Please select a file and enter a category.")
+
+# Upload Section
+st.header("Upload an Audio File")
+uploaded_file = st.file_uploader("Choose an audio file", type=["mp3"])
 
 # Dropdown to select category for managing files
 st.header("Select Category to Manage Files")
