@@ -28,14 +28,14 @@ def login():
     if st.button("Login"):
         if check_authentication(username, password):
             st.session_state['authenticated'] = True
-            st.success("Login successful!")
+            st.success("Login successful!please click on login again")
         else:
             st.error("Invalid username or password")
 
 # Logout function
 def logout():
     st.session_state['authenticated'] = False
-    st.success("You have been logged out.")
+    st.success("You have been logged out! please click on log out.")
 
 # Function to get list of categories (subfolders in AUDIO_FOLDER)
 def get_categories():
