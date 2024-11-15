@@ -6,9 +6,38 @@ from tinytag import TinyTag  # Lightweight library to get audio metadata
 AUDIO_FOLDER = "audio_files"
 os.makedirs(AUDIO_FOLDER, exist_ok=True)  # Ensure the folder exists
 
-# Initialize session state for uploaded files
+# Define username and password 
+USERNAME = "apprikart"
+PASSWORD = "apprikart@123" 
+
+# Initialize session state for authentication and uploaded files
+if 'authenticated' not in st.session_state:
+    st.session_state['authenticated'] = False
 if 'uploaded_files' not in st.session_state:
     st.session_state['uploaded_files'] = []
+
+# Function to check authentication
+def check_authentication(username, password):
+    return username == USERNAME and password == PASSWORD
+
+# Login function
+def login():
+    st.header("Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        if check_authentication(username, password):
+            st.session_state['authenticated'] = True
+            st.success("Login successful!")
+            st.experimental_rerun()  # Reload the app after login
+        else:
+            st.error("Invalid username or password")
+
+# Logout function
+def logout():
+    st.session_state['authenticated'] = False
+    st.success("You have been logged out.")
+    st.experimental_rerun()  
 
 # Function to get list of categories (subfolders in AUDIO_FOLDER)
 def get_categories():
@@ -57,76 +86,88 @@ def delete_file(file_path, category):
         if file_path in st.session_state['uploaded_files']:
             st.session_state['uploaded_files'].remove(file_path)  # Remove from session state if it was uploaded in this session
         st.success(f"File '{os.path.basename(file_path)}' has been deleted.")
-        
+
         # Check if the category folder is empty, and delete it if so
         category_folder = os.path.join(AUDIO_FOLDER, category)
         if not os.listdir(category_folder):  # Folder is empty
             os.rmdir(category_folder)
             st.success(f"Category '{category}' has been deleted as it had no more files.")
 
-# Page title
-st.title("Audio File Downloader, Uploader, Player, and Deleter")
+# Main app
+def main_app():
+    st.title("Audio File Downloader, Uploader, Player, and Deleter")
 
-# Dropdown for category selection with an option to add a new category
-existing_categories = get_categories()
-category_option = st.selectbox("Select a category or type a new one for your file", ["Create New Category"] + existing_categories)
+    # Dropdown for category selection with an option to add a new category
+    existing_categories = get_categories()
+    category_option = st.selectbox("Select a category or type a new one for your file", ["Create New Category"] + existing_categories)
 
-if category_option == "Create New Category":
-    # If 'Create New Category' is selected, show a text input for the new category
-    category = st.text_input("Enter new category name")
-else:
-    # If an existing category is selected, use that category
-    category = category_option
-
-# Upload Section
-st.header("Upload an Audio File")
-uploaded_file = st.file_uploader("Choose an audio file", type=["mp3"])
-
-if st.button("Upload File"):
-    if uploaded_file and category:
-        file_path = save_uploaded_file(uploaded_file, category)
-        st.success(f"File '{uploaded_file.name}' uploaded successfully to category '{category}'.")
+    if category_option == "Create New Category":
+        # If 'Create New Category' is selected, show a text input for the new category
+        category = st.text_input("Enter new category name")
     else:
-        st.error("Please select a file and enter a category.")
+        # If an existing category is selected, use that category
+        category = category_option
 
-# Dropdown to select category for managing files
-st.header("Select Category to Manage Files")
-categories = ["Choose a category"] + get_categories()  # Add placeholder as the first option
+    # Upload Section
+    st.header("Upload an Audio File")
+    uploaded_file = st.file_uploader("Choose an audio file", type=["mp3"])
 
-selected_category = st.selectbox("Choose a category", categories)
+    if st.button("Upload File"):
+        if uploaded_file and category:
+            file_path = save_uploaded_file(uploaded_file, category)
+            st.success(f"File '{uploaded_file.name}' uploaded successfully to category '{category}'.")
+        else:
+            st.error("Please select a file and enter a category.")
 
-if selected_category == "Choose a category":
-    st.write("Please select a category to view files available for download, play, or deletion.")
-else:
-    # Display files in the selected category with download, play, and delete options
-    files = get_files_by_category(selected_category)
-    
-    if files:
-        st.subheader(f"Files in '{selected_category}' category:")
+    # Dropdown to select category for managing files
+    st.header("Select Category to Manage Files")
+    categories = ["Choose a category"] + get_categories()  # Add placeholder as the first option
+
+    selected_category = st.selectbox("Choose a category", categories)
+
+    if selected_category == "Choose a category":
+        st.write("Please select a category to view files available for download, play, or deletion.")
+    else:
+        # Display files in the selected category with download, play, and delete options
+        files = get_files_by_category(selected_category)
         
-        # Provide download links, play buttons, and delete buttons for each file in the category
-        for file_name, duration, size_mb, file_path in files:
-            # Display file name, duration, and size in MB
-            st.write(f"**{file_name}** - Duration: {duration}, Size: {size_mb:.2f} MB")
+        if files:
+            st.subheader(f"Files in '{selected_category}' category:")
             
-            # Audio player
-            st.audio(file_path, format="audio/mp3")
+            # Provide download links, play buttons, and delete buttons for each file in the category
+            for file_name, duration, size_mb, file_path in files:
+                # Display file name, duration, and size in MB
+                st.write(f"**{file_name}** - Duration: {duration}, Size: {size_mb:.2f} MB")
+                
+                # Audio player
+                st.audio(file_path, format="audio/mp3")
 
-            # Columns for download and delete buttons
-            col1, col2 = st.columns(2)
-            with col1:
-                # Download button
-                with open(file_path, "rb") as f:
-                    audio_bytes = f.read()
-                    st.download_button(
-                        label=f"Download {file_name}",
-                        data=audio_bytes,
-                        file_name=file_name,
-                        mime="audio/mpeg"
-                    )
-            with col2:
-                # Delete button (available for all files)
-                if st.button("Delete", key=file_path):
-                    delete_file(file_path, selected_category)
-    else:
-        st.write("No files in this category.")
+                # Columns for download and delete buttons
+                col1, col2 = st.columns(2)
+                with col1:
+                    # Download button
+                    with open(file_path, "rb") as f:
+                        audio_bytes = f.read()
+                        st.download_button(
+                            label=f"Download {file_name}",
+                            data=audio_bytes,
+                            file_name=file_name,
+                            mime="audio/mpeg"
+                        )
+                with col2:
+                    # Delete button (available for all files)
+                    if st.button("Delete", key=file_path):
+                        delete_file(file_path, selected_category)
+        else:
+            st.write("No files in this category.")
+
+    # Logout button at the end
+    st.markdown("---")
+    if st.button("Logout"):
+        logout()
+
+# Authentication flow
+if not st.session_state['authenticated']:
+    login()
+else:
+    main_app()
