@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+from tinytag import TinyTag  # Lightweight library to get audio metadata
 
 # Define the main folder where audio files are stored
 AUDIO_FOLDER = "audio_files"
@@ -24,11 +25,28 @@ def save_uploaded_file(uploaded_file, category):
     st.session_state['uploaded_files'].append(file_path)
     return file_path
 
-# Function to get files in a specific category
+# Function to get audio metadata (duration in MM:SS and size in MB)
+def get_audio_metadata(file_path):
+    tag = TinyTag.get(file_path)
+    duration_seconds = tag.duration  # Duration in seconds
+    size_mb = os.path.getsize(file_path) / (1024 * 1024)  # Size in MB
+
+    # Convert duration to minutes and seconds
+    minutes = int(duration_seconds // 60)
+    seconds = int(duration_seconds % 60)
+    formatted_duration = f"{minutes}:{seconds:02d}"  # Format as MM:SS
+
+    return formatted_duration, size_mb
+
+# Function to get files in a specific category and their metadata
 def get_files_by_category(category):
     category_folder = os.path.join(AUDIO_FOLDER, category)
     if os.path.exists(category_folder):
-        files = [(file_name, os.path.join(category_folder, file_name)) for file_name in os.listdir(category_folder)]
+        files = []
+        for file_name in os.listdir(category_folder):
+            file_path = os.path.join(category_folder, file_name)
+            duration, size_mb = get_audio_metadata(file_path)
+            files.append((file_name, duration, size_mb, file_path))
         return files
     return []
 
@@ -86,10 +104,9 @@ else:
         st.subheader(f"Files in '{selected_category}' category:")
         
         # Provide download links and delete buttons for each file in the category
-        for file_name, file_path in files:
-            # Display file name and size in MB
-            file_size_mb = os.path.getsize(file_path) / (1024 * 1024)  # Size in MB
-            st.write(f"**{file_name}** - Size: {file_size_mb:.2f} MB")
+        for file_name, duration, size_mb, file_path in files:
+            # Display file name, duration, and size in MB
+            st.write(f"**{file_name}** - Duration: {duration}, Size: {size_mb:.2f} MB")
             
             # Columns for download and delete buttons
             col1, col2 = st.columns(2)
