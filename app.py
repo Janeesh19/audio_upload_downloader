@@ -78,16 +78,16 @@ else:
     # If an existing category is selected, use that category
     category = category_option
 
+# Upload Section
+st.header("Upload an Audio File")
+uploaded_file = st.file_uploader("Choose an audio file", type=["mp3"])
+
 if st.button("Upload File"):
     if uploaded_file and category:
         file_path = save_uploaded_file(uploaded_file, category)
         st.success(f"File '{uploaded_file.name}' uploaded successfully to category '{category}'.")
     else:
         st.error("Please select a file and enter a category.")
-
-# Upload Section
-st.header("Upload an Audio File")
-uploaded_file = st.file_uploader("Choose an audio file", type=["mp3"])
 
 # Dropdown to select category for managing files
 st.header("Select Category to Manage Files")
